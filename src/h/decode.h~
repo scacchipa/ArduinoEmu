@@ -1,0 +1,531 @@
+#ifndef DECODE_H_INCLUDED
+#define DECODE_H_INCLUDED
+
+char buffer[80];
+unsigned short m, w;
+
+void fetchMemory(unsigned short *m);
+int findVar(char* p, char* lineVar);
+
+void get654(unsigned char *d);
+void get210(unsigned char *d);
+void get3210(unsigned char *b);
+void get7654(unsigned char *b);
+void get87654(unsigned char *b);
+void get93210(unsigned char *b);
+void getBA983210(unsigned char *b);
+void getBA210(unsigned char *b);
+void get4(unsigned char *b);
+void get3(unsigned char *b);
+void get32(unsigned char *b);
+void get0(unsigned char *b);
+void get10(unsigned char *b);
+void get54(unsigned char *d);
+void get763210(unsigned char *k);
+void get876540(unsigned char *k);
+void get76543(unsigned char *a);
+void getA93210(unsigned char *a);
+void getBA987654321(unsigned short *k);
+void get9876543(unsigned char *k);
+void getDBA210(unsigned char *k);
+void getB(unsigned char *b);
+
+#define GET3d3r( str ) \
+    unsigned char d; \
+    unsigned char r; \
+    get654(&d); \
+    get210(&r); \
+    sprintf(buffer, str, d, r);
+
+#define GET4d4r( str ) \
+    unsigned char d; \
+    unsigned char r; \
+    get7654(&d); \
+    get3210(&r); \
+    sprintf(buffer, str, d, r);
+
+#define GET5d5r( str ) \
+    unsigned char d; \
+    unsigned char r; \
+    get87654(&d); \
+    get93210(&r); \
+    sprintf(buffer, str, d, r);
+
+#define GET4d8k( str ) \
+    unsigned char d; \
+    unsigned char k; \
+    get7654(&d); \
+    getBA983210(&k); \
+    sprintf(buffer, str, d + 16, k);
+
+
+void nop(); // No Operation
+void ijmp() { // Indirect Jump
+    sprintf(buffer, "IJMP");
+};
+void eijmp() { // Extended Indirect Jump
+    sprintf(buffer, "EIJMP");
+};
+void ret() {// Return from Subroutine
+    sprintf(buffer, "RET");
+};
+void icall() { // Indirect Call to Subroutine
+    sprintf(buffer, "ICALL");
+};
+void reti() { // Return from Interrupt
+    sprintf(buffer, "RETI");
+     };
+void eicall() { // Extended Indirect Call to Subroutine
+    sprintf(buffer, "EICALL");
+};
+void sleep() { // Sleep
+    sprintf(buffer, "SLEEP");
+};
+void breakx() { // Break
+    sprintf(buffer, "BREAK");
+};
+void wdr() { // Watchdog Reset
+    sprintf(buffer, "WDR");
+};
+void lpm() { // Load register from program memory (from Z)
+    if (m == 0x95C8) {
+        sprintf(buffer, "LPM");
+    } else {
+        if ((m & 0xFE0E) == 0x9004) {
+            unsigned char d;
+            get87654(&d);
+            unsigned char bit;
+            get0(&bit);
+            if (bit == 0) {
+                sprintf(buffer, "LPM R%d, Z", d);
+            } else { // bit == 1
+                sprintf(buffer, "LPM R%d, Z+", d);
+            }
+        }
+    }
+};
+void elpm() { // Extend load memory program
+    if (m == 0x95D8) {
+        sprintf(buffer, "ELPM");
+    } else {
+        if ((m & 0xFE0E) == 0x9006){
+            unsigned char d;
+            get87654(&d);
+            unsigned char bit;
+            get0(&bit);
+            if (bit == 0) {
+                sprintf(buffer, "ELPM R%d, Z", d);
+            } else { // bit == 1
+                sprintf(buffer, "ELPM R%d, Z+", d);
+            }
+        }
+    }
+};
+void spm() { // Store Program Memory
+    unsigned char bit;
+    get4(&bit);
+    if (bit) sprintf(buffer, "SPM Z+");
+    else sprintf(buffer, "SPM");
+};
+void movw() { //Copy Register Word
+    GET4d4r("MOVW R%u, R%u");
+};
+void muls() { // Multiple signed
+    unsigned char d;
+    unsigned char r;
+    get7654(&d);
+    get3210(&r);
+    sprintf(buffer, "MULS R%u, R%u", d + 16, r + 16);
+};
+void mulsu() { // Multiply signed with unsigned
+    unsigned char d;
+    unsigned char r;
+    get654(&d);
+    get210(&r);
+    sprintf(buffer, "MULSU R%u, R%u", d + 16, r + 16);
+};
+void fmul() { // Fractional multiply unsigned
+    unsigned char d;
+    unsigned char r;
+    get654(&d);
+    get210(&r);
+    sprintf(buffer, "FMUL R%u, R%u", d + 16, r + 16);
+};
+void fmuls() { // Fractional multiply signed
+    unsigned char d;
+    unsigned char r;
+    get654(&d);
+    get210(&r);
+    sprintf(buffer, "FMULS R%u, R%u", d + 16, r + 16);
+};
+void fmulsu() { // Fractional multiply signed with unsigned
+    unsigned char d;
+    unsigned char r;
+    get654(&d);
+    get210(&r);
+    sprintf(buffer, "FMULSU R%u, R%u", d + 16, r + 16);
+    };
+void cpc() { // Compare with carry
+    GET5d5r("CPC R%u, R%u");
+};
+void sbc() { // subtract with carry
+    GET5d5r("SBC R%u, R%u");
+    };
+void add() { // add without carry
+    GET5d5r("ADD R%u, R%u");
+};
+void cpse() { // Compare skip if equal
+    GET5d5r("CPSE R%u, R%u");
+};
+void cp() { // Compare
+    GET5d5r("CP R%u, R%u");
+};
+void sub() { // Subtract without carry
+    GET5d5r("SUB R%u, R%u");
+};
+void adc() { // Add with carry
+    GET5d5r("ADC R%u, R%u");
+};
+void and() { // Logical AND
+    GET5d5r("AND R%u, R%u");
+};
+void eor() { // Exclusive OR
+    GET5d5r("EOR R%u, R%u");
+};
+void or() { // Logical OR
+    GET5d5r("OR R%u, R%u");
+};
+void mov() { // Copy register
+    GET5d5r("MOV R%u, R%u");
+};
+void mul() { // Multiply Unsigned
+    GET5d5r("MUL R%u, R%u");
+};
+void brbs() { // Branch if Bit in SREG is Set
+    unsigned char k;
+    unsigned char s;
+    get9876543(&k);
+    get210(&s);
+    sprintf(buffer, "BRBS %u, %u", s, k);
+};
+void brbc() { // Branch if Bit in SREG is Clear
+    unsigned char k;
+    unsigned char s;
+    get9876543(&k);
+    get210(&s);
+    sprintf(buffer, "BRBC %u, %u", s, k);
+};
+void cpi() {  // Compare with immediate
+    GET4d8k("CPI R%u, %u");
+};
+void sbci() { // Subtract immediate with carry SBI
+    GET4d8k("SBCI R%u, %u");
+};
+void subi() { // Substract immediate
+    GET4d8k("SUBI R%u, %u");
+};
+void ori() { // Logical OR with immediate
+    GET4d8k("ORI R%u, %u");
+};
+void andi() { // Logical AND with immediate
+    GET4d8k("ANDI R%u, %u");
+};
+void rjmp() { // Relative Jump
+    unsigned short k;
+    getBA987654321(&k);
+    unsigned char b;
+    getB(&b);
+    sprintf(buffer, "RJMP %d", b?k-4096:k);
+};
+void rcall() { // Relative Call to Subroutine
+    unsigned short k;
+    getBA987654321(&k);
+    unsigned char b;
+    getB(&b);
+    sprintf(buffer, "RCALL %d", b?k-4096:k);
+};
+void ldi() { // Load Immediate
+    unsigned char d;
+    unsigned char k;
+    get7654(&d);
+    getBA983210(&k);
+    sprintf(buffer, "LDI R%u, %u", d, k);
+};
+void ldd() { // Load register indirect from data space with displacement
+    unsigned char d;
+    get87654(&d);
+    unsigned char k;
+    getDBA210(&k);
+    unsigned char y;
+    get3(&y);
+    sprintf(buffer, "LDD R%d, %c+%d", d, y==0?'Z':'Y', k);
+};
+void ld() { // Load Indirect from Data Space to Register
+    unsigned char d, letterCode, op;
+    char letter;
+    get87654(&d);
+    get32(&letterCode);
+    get10(&op);
+
+    switch(letterCode) {
+        case 0x0:
+            letter = 'Z';
+            break;
+        case 0x2:
+            letter = 'Y';
+            break;
+        case 0x3:
+            letter = 'X';
+    }
+    switch (op) {
+    case 0x00:
+        sprintf(buffer, "LD R%d, %c", d, letter);
+        break;
+    case 0x01:
+        sprintf(buffer, "LD R%d, %c+", d, letter);
+        break;
+    case 0x2:
+        sprintf(buffer, "LD R%d, -%c", d, letter);
+    }
+};
+void lds() { // Load register direct from data space
+    unsigned char d;
+    get87654(&d);
+    fetchMemory(&w);
+    sprintf(buffer, "LDS R%d, %d", d, w);
+    };
+void reserved() { sprintf(buffer, "*RESERVED*"); };
+void pop() { // Pop Register from Stack
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "POP R%u", d);
+};
+void sts() { // Store Direct to Data Space
+    unsigned char d;
+    get87654(&d);
+    fetchMemory(&w);
+    sprintf(buffer, "STS %d, R%d", w, d);
+};
+void st() { // Store Indirect From Register to Data Space
+    unsigned char d, letterCode, op;
+    char letter;
+    get87654(&d);
+    get32(&letterCode);
+    get10(&op);
+
+    switch(letterCode) {
+        case 0x0:
+            letter = 'Z';
+            break;
+        case 0x2:
+            letter = 'Y';
+            break;
+        case 0x3:
+            letter = 'X';
+    }
+    switch (op) {
+    case 0x00:
+        sprintf(buffer, "ST %c, R%d", letter, d);
+        break;
+    case 0x01:
+        sprintf(buffer, "ST %c+, R%d", letter, d);
+        break;
+    case 0x2:
+        sprintf(buffer, "ST -%c, R%d", letter, d);
+    }
+};
+void push() { // Push Register on Stack
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "PUSH R%u", d);
+};
+void com() { // One’s Complement
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "COM R%u", d);
+};
+void neg() { // Two’s Complement
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "NEG R%u", d);
+};
+void swap() { // Swap Nibbles
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "SWAP R%u", d);
+};
+void inc() { // Increment
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "INC R%u", d);
+};
+void asr() { // Arithmetic Shift Right
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "ASR R%u", d);
+};
+void lsr() { // Logical Shift Right
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "LSR R%u", d);
+};
+void ror() { // Rotate Right through Carry
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "ROR R%d", d);
+};
+void dec() { // Decrement
+    unsigned char d;
+    get87654(&d);
+    sprintf(buffer, "DEC R%u", d);
+};
+void std() { // Store Indirect From Register to Data Space
+    unsigned char d;
+    get87654(&d);
+    unsigned char k;
+    getDBA210(&k);
+    unsigned char y;
+    get3(&y);
+    sprintf(buffer, "STD R%d, %c+%d", d, y==0?'Z':'Y', k);
+    };
+void bset() { // Bit Set in SREG
+    unsigned char s;
+    get654(&s);
+    sprintf(buffer, "BSET %u", s);
+};
+void bclr() { // Bit Clear in SREG
+    unsigned char s;
+    get654(&s);
+    sprintf(buffer, "BCLR %u", s);
+};
+void jmp() { // Jump
+    unsigned char k;
+    unsigned int t;
+    get876540(&k);
+    fetchMemory(&w);
+    t = ((unsigned int)k << 16) + w;
+    sprintf(buffer, "JMP %u", t); };
+void call() { // Long Call to a Subroutine
+    unsigned char k;
+    unsigned int t;
+    get876540(&k);
+    fetchMemory(&w);
+    t = (k << 16) + w;
+    sprintf(buffer, "CALL %u", t);
+};
+void adiw() { // Add Immediate to Word
+    unsigned char d;
+    unsigned char k;
+    unsigned char reg;
+    get54(&d);
+    switch(d) {
+    case 0x0:
+        reg = 24;
+        break;
+    case 0x1:
+        reg = 26;
+        break;
+    case 0x2:
+        reg = 28;
+        break;
+    case 0x3:
+        reg = 30;
+    }
+    get763210(&k);
+    sprintf(buffer, "ADIW R%u, %u", reg, k);
+    };
+void sbiw() { // Subtract Immediate from Word
+    unsigned char d;
+    unsigned char k;
+    unsigned char reg;
+    get54(&d);
+    switch(d) {
+    case 0x0:
+        reg = 24;
+        break;
+    case 0x1:
+        reg = 26;
+        break;
+    case 0x2:
+        reg = 28;
+        break;
+    case 0x3:
+        reg = 30;
+    }
+    get763210(&k);
+    sprintf(buffer, "SBIW R%u, %u", reg, k);
+};
+void cbi() { // Clear Bit in I/O Register
+    unsigned char a;
+    unsigned char b;
+    get76543(&a);
+    get210(&b);
+    sprintf(buffer, "CBI %u, %u", a, b);
+};
+void sbic() { // Skip if Bit in I/O Register is Cleared
+    unsigned char a;
+    unsigned char b;
+    get76543(&a);
+    get210(&b);
+    sprintf(buffer, "SBIC %u, %u", a, b);
+};
+void sbi() { // Set Bit in I/O Register
+    unsigned char a;
+    unsigned char b;
+    get76543(&a);
+    get210(&b);
+    sprintf(buffer, "SBI %u, %u", a, b);
+};
+void sbis() { // Skip if Bit in I/O Register is Set
+    unsigned char a;
+    unsigned char b;
+    get76543(&a);
+    get210(&b);
+    sprintf(buffer, "SBIS %u, %u", a, b);
+};
+void in() { // Load an I/O Location to Register
+    unsigned char d;
+    unsigned char a;
+    get87654(&d);
+    getA93210(&a);
+    sprintf(buffer, "IN R%u, %u", d, a);
+};
+void out() { // Store Register to I/O Location
+    unsigned char d;
+    unsigned char a;
+    get87654(&d);
+    getA93210(&a);
+    sprintf(buffer, "OUT R%u, %u", d, a);
+};
+void bld() { // Bit Load from the T Flag in SREG to a Bit in Register
+    unsigned char d;
+    unsigned char b;
+    get87654(&d);
+    get210(&b);
+    sprintf(buffer, "BLD R%u, %u", d, b);
+    };
+void bst() { //  Bit Store from Bit in Register to T Flag in SREG
+    unsigned char d;
+    unsigned char b;
+    get87654(&d);
+    get210(&b);
+    sprintf(buffer, "BST R%u, %u", d, b);
+};
+void sbrc() { // Skip if Bit in Register is Cleared
+    unsigned char r;
+    unsigned char b;
+    get87654(&r);
+    get210(&b);
+    sprintf(buffer, "SBRC R%u, %u", r, b);
+};
+void sbrs() { // Skip if Bit in Register is Set
+    unsigned char r;
+    unsigned char b;
+    get87654(&r);
+    get210(&b);
+    sprintf(buffer, "SBRS R%u, %u", r, b);
+};
+
+
+
+#endif // DECODE_H_INCLUDED
